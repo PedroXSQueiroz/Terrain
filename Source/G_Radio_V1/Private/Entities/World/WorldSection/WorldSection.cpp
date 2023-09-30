@@ -3,6 +3,8 @@
 
 #include "Entities/World/WorldSection/WorldSection.h"
 
+#include "Async/AsyncWork.h"
+
 #include "Systems/MeshFactory/MeshFactory.h"
 
 #include "ProceduralMeshComponent.h"
@@ -32,15 +34,16 @@ void AWorldSection::BeginPlay()
 
 		TArray<FVector> allVertex = TArray<FVector>();
 		TArray<int> allTriangles = TArray<int>();
-
+		TArray<FVector2D> uv = TArray<FVector2D>();
 		for (FMeshTriangleData triangleData : triangles) 
 		{
-			for (FVector currentVertex : triangleData.Vertex) 
+			for (int vertexIndex = 0; vertexIndex < triangleData.Vertex.Num(); vertexIndex++)
 			{
+				FVector currentVertex = triangleData.Vertex[vertexIndex];
 				allVertex.Add(currentVertex);
 				allTriangles.Add(allTriangles.Num());
 
-				if (this->Debug) 
+				if (this->DebugVertex) 
 				{
 					DrawDebugSphere(
 						this->GetWorld(),
@@ -60,11 +63,13 @@ void AWorldSection::BeginPlay()
 						,	allVertex
 						,	allTriangles
 						,	TArray<FVector>()
-						,	TArray<FVector2D>()
+						,	uv
 						,	TArray<FColor>()
 						,	TArray<FProcMeshTangent>()
 						,	false
 						);
+
+		this->Ground->SetMaterial(0, this->MainGroundMaterial);
 
 	}
 }

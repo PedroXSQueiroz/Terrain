@@ -23,7 +23,14 @@ public:
 	class UProceduralMeshComponent* Ground;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
-	bool Debug;
+	class UMaterialInterface* MainGroundMaterial;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
+	bool DebugVertex;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
+	bool DebugNormals;
+
 	
 protected:
 	// Called when the game starts or when spawned
