@@ -21,6 +21,7 @@ AWorldSection::AWorldSection()
 
 }
 
+
 // Called when the game starts or when spawned
 void AWorldSection::BeginPlay()
 {
@@ -28,49 +29,74 @@ void AWorldSection::BeginPlay()
 
 	if (this->MeshFactoryType && this->IsValidFactoryType(this->MeshFactoryType.Get()))
 	{
-		UObject* factoryInstance = this->MeshFactoryType.GetDefaultObject();
-		IMeshFactory* factory = Cast<IMeshFactory>(factoryInstance);
-		TArray<FMeshTriangleData> triangles = factory->Build(this);
+		
+		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [&]() {
+			UE_LOG(LogTemp, Log, TEXT("BUILDING MESH"))
+			
+			UObject* factoryInstance = this->MeshFactoryType.GetDefaultObject();
+			IMeshFactory* factory = Cast<IMeshFactory>(factoryInstance);
+			TArray<FMeshTriangleData> triangles = factory->Build(this);
 
-		TArray<FVector> allVertex = TArray<FVector>();
-		TArray<int> allTriangles = TArray<int>();
-		TArray<FVector2D> uv = TArray<FVector2D>();
-		for (FMeshTriangleData triangleData : triangles) 
-		{
-			for (int vertexIndex = 0; vertexIndex < triangleData.Vertex.Num(); vertexIndex++)
+			TArray<FVector> allVertex = TArray<FVector>();
+			TArray<int> allTriangles = TArray<int>();
+			TArray<FVector> normals = TArray<FVector>();
+			for (FMeshTriangleData triangleData : triangles)
 			{
-				FVector currentVertex = triangleData.Vertex[vertexIndex];
-				allVertex.Add(currentVertex);
-				allTriangles.Add(allTriangles.Num());
-
-				if (this->DebugVertex) 
+				for (int vertexIndex = 0; vertexIndex < triangleData.Vertex.Num(); vertexIndex++)
 				{
-					DrawDebugSphere(
-						this->GetWorld(),
-						currentVertex * this->GetActorScale(),
-						1,
-						12,
-						FColor::Red,
-						true
-					);
-				}
+					FVector currentVertex = triangleData.Vertex[vertexIndex];
+					allVertex.Add(currentVertex);
+					allTriangles.Add(allTriangles.Num());
 
-			}
-		}
+					if (allVertex.Num() % 3 == 0)
+					{
+						FVector first = allVertex[vertexIndex - 2];
+						FVector second = allVertex[vertexIndex - 1];
+						FVector third = allVertex[vertexIndex];
 
-		this->Ground->CreateMeshSection(
-							0
-						,	allVertex
-						,	allTriangles
-						,	TArray<FVector>()
-						,	uv
-						,	TArray<FColor>()
-						,	TArray<FProcMeshTangent>()
-						,	false
+						FVector a = second - first;
+						FVector b = third - first;
+
+						normals.Add(
+							FVector(
+								(a.Y * b.Z) - (a.Z * b.Y),
+								(a.Z * b.X) - (a.X * b.Z),
+								(a.X * b.Y) - (a.Y * b.Z)
+							)
 						);
+					}
 
-		this->Ground->SetMaterial(0, this->MainGroundMaterial);
+					if (this->DebugVertex)
+					{
+						DrawDebugSphere(
+							this->GetWorld(),
+							currentVertex * this->GetActorScale(),
+							1,
+							12,
+							FColor::Red,
+							true
+						);
+					}
 
+				}
+			}
+
+			this->Ground->CreateMeshSection(
+				0
+				, allVertex
+				, allTriangles
+				, normals
+				, TArray<FVector2D>()
+				, TArray<FColor>()
+				, TArray<FProcMeshTangent>()
+				, false
+			);
+
+			this->Ground->SetMaterial(0, this->MainGroundMaterial);
+
+			UE_LOG(LogTemp, Log, TEXT("FINISEHD MESH"))
+		});
+		
 	}
 }
 
