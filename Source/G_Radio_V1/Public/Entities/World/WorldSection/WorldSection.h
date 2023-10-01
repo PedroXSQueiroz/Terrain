@@ -5,7 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
+#include "ProceduralMeshComponent.h"
+#include "Templates/SharedPointer.h"
+
 #include "WorldSection.generated.h"
+
+DECLARE_MULTICAST_DELEGATE_FourParams(FMeshCompletedEvent, TArray<FVector>, TArray<int>, TArray<FVector>, TArray<FProcMeshTangent>)
 
 UCLASS()
 class G_RADIO_V1_API AWorldSection : public AActor
@@ -20,7 +25,7 @@ public:
 	TSubclassOf<UObject> MeshFactoryType;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
-	class UProceduralMeshComponent* Ground;
+	UProceduralMeshComponent* Ground;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
 	class UMaterialInterface* MainGroundMaterial;
@@ -31,12 +36,18 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
 	bool DebugNormals;
 
+	FMeshCompletedEvent& OnMeshCompleted()
+	{
+		return this->MeshCompletedEvent;
+	}
 	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	bool IsValidFactoryType(UClass* factoryType);
+
+	FMeshCompletedEvent MeshCompletedEvent = FMeshCompletedEvent();
 
 public:	
 	// Called every frame

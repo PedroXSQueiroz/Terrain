@@ -16,12 +16,13 @@ AWorldSection::AWorldSection()
 	PrimaryActorTick.bCanEverTick = true;
 
 	this->Ground = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GROUND"));
-	this->RootComponent = this->Ground;
-	this->Ground->bUseAsyncCooking = true;
+	//this->RootComponent = this->Ground;
+	this->Ground->SetupAttachment(this->RootComponent);
+	//this->Ground->bUseAsyncCooking = true;
 
 }
 
-
+#pragma optimize( "", off )
 // Called when the game starts or when spawned
 void AWorldSection::BeginPlay()
 {
@@ -30,16 +31,49 @@ void AWorldSection::BeginPlay()
 	if (this->MeshFactoryType && this->IsValidFactoryType(this->MeshFactoryType.Get()))
 	{
 		
-		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [&]() {
+		this->OnMeshCompleted().AddLambda([&](TArray<FVector> vertex, TArray<int> triangles, TArray<FVector> normals, TArray<FProcMeshTangent> tangents) {
+			this->Ground->CreateMeshSection(
+				0
+				, vertex
+				, triangles
+				, normals
+				, TArray<FVector2D>()
+				, TArray<FColor>()
+				, tangents
+				, false
+			);
+
+			this->Ground->UpdateBounds();
+			this->Ground->SetMaterial(0, this->MainGroundMaterial);
+
+			UE_LOG(LogTemp, Log, TEXT("FINISEHD MESH"))
+		});
+
+		
+		UObject* factoryInstance = this->MeshFactoryType.GetDefaultObject();
+		bool debugVertex = this->DebugVertex;
+		bool debugNormals = this->DebugNormals;
+
+		AActor* owner = this;
+
+		FMeshCompletedEvent finishEvent = this->OnMeshCompleted();
+
+		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [
+					owner
+				,	debugVertex
+				,	debugNormals
+				,	factoryInstance
+				,	finishEvent]() {
 			UE_LOG(LogTemp, Log, TEXT("BUILDING MESH"))
 			
-			UObject* factoryInstance = this->MeshFactoryType.GetDefaultObject();
 			IMeshFactory* factory = Cast<IMeshFactory>(factoryInstance);
-			TArray<FMeshTriangleData> triangles = factory->Build(this);
+			TArray<FMeshTriangleData> triangles = factory->Build(owner);
 
-			TArray<FVector> allVertex = TArray<FVector>();
-			TArray<int> allTriangles = TArray<int>();
-			TArray<FVector> normals = TArray<FVector>();
+			TArray<FVector> allVertex			= TArray<FVector>();
+			TArray<int> allTriangles			= TArray<int>();
+			TArray<FVector> normals				= TArray<FVector>();
+			TArray<FProcMeshTangent> tangents	= TArray<FProcMeshTangent>();
+
 			for (FMeshTriangleData triangleData : triangles)
 			{
 				for (int vertexIndex = 0; vertexIndex < triangleData.Vertex.Num(); vertexIndex++)
@@ -48,57 +82,126 @@ void AWorldSection::BeginPlay()
 					allVertex.Add(currentVertex);
 					allTriangles.Add(allTriangles.Num());
 
+					//----------------------------
+					// AT EACH TRIANGLE 
+					//----------------------------
 					if (allVertex.Num() % 3 == 0)
 					{
-						FVector first = allVertex[vertexIndex - 2];
-						FVector second = allVertex[vertexIndex - 1];
-						FVector third = allVertex[vertexIndex];
+						//----------------------------
+						// NORMALS 
+						//----------------------------
+						
+						int lastVertexIndex = allVertex.Num() - 1;
+						
+						FVector first =		allVertex[lastVertexIndex - 2] * owner->GetActorScale();
+						FVector second =	allVertex[lastVertexIndex - 1] * owner->GetActorScale();
+						FVector third =		allVertex[lastVertexIndex] * owner->GetActorScale();
 
 						FVector a = second - first;
 						FVector b = third - first;
 
-						normals.Add(
-							FVector(
-								(a.Y * b.Z) - (a.Z * b.Y),
-								(a.Z * b.X) - (a.X * b.Z),
-								(a.X * b.Y) - (a.Y * b.Z)
-							)
+						FVector currentNormal = FVector(
+							(a.Y * b.Z) - (a.Z * b.Y),
+							(a.Z * b.X) - (a.X * b.Z),
+							(a.X * b.Y) - (a.Y * b.Z)
+						) * -1;
+
+						normals.Add(currentNormal);
+						
+						if (debugNormals) 
+						{
+							FVector triangleCenter = FVector(
+								(first.X + second.X + third.X) / 3,
+								(first.Y + second.Y + third.Y) / 3,
+								(first.Z + second.Z + third.Z) / 3
+							) * owner->GetActorScale();
+							
+							DrawDebugLine(
+								owner->GetWorld(),
+								triangleCenter,
+								triangleCenter + ( currentNormal * owner->GetActorScale()),
+								FColor::Red,
+								true
+							);
+
+							DrawDebugSphere(
+								owner->GetWorld(),
+								triangleCenter,
+								5,
+								6,
+								FColor::Red,
+								true
+							);
+						}
+						
+						//----------------------------
+						// NORMALS 
+						//----------------------------
+						
+						//----------------------------
+						// TANGENTS
+						//----------------------------
+						
+						FVector triangleProduct = FVector::CrossProduct(second - first, third - first) * -1;
+						
+						triangleProduct.Normalize();
+
+						tangents.Add(FProcMeshTangent(triangleProduct, false));
+						tangents.Add(FProcMeshTangent(triangleProduct, false));
+						tangents.Add(FProcMeshTangent(triangleProduct, false));
+
+						DrawDebugLine(
+							owner->GetWorld(),
+							first,
+							first + (triangleProduct * owner->GetActorScale()),
+							FColor::Red,
+							true
 						);
+
+						DrawDebugLine(
+							owner->GetWorld(),
+							second,
+							second + (triangleProduct * owner->GetActorScale()),
+							FColor::Red,
+							true
+						);
+
+						DrawDebugLine(
+							owner->GetWorld(),
+							third,
+							third + (triangleProduct * owner->GetActorScale()),
+							FColor::Red,
+							true
+						);
+
+						//----------------------------
+						// TANGENTS
+						//----------------------------
 					}
 
-					if (this->DebugVertex)
+
+					if (debugVertex)
 					{
 						DrawDebugSphere(
-							this->GetWorld(),
-							currentVertex * this->GetActorScale(),
-							1,
-							12,
+							owner->GetWorld(),
+							currentVertex * owner->GetActorScale(),
+							5,
+							6,
 							FColor::Red,
 							true
 						);
 					}
 
+
 				}
 			}
 
-			this->Ground->CreateMeshSection(
-				0
-				, allVertex
-				, allTriangles
-				, normals
-				, TArray<FVector2D>()
-				, TArray<FColor>()
-				, TArray<FProcMeshTangent>()
-				, false
-			);
-
-			this->Ground->SetMaterial(0, this->MainGroundMaterial);
-
-			UE_LOG(LogTemp, Log, TEXT("FINISEHD MESH"))
+			finishEvent.Broadcast(allVertex, allTriangles, normals, tangents);
 		});
 		
 	}
 }
+#pragma optimize( "", on )
 
 bool AWorldSection::IsValidFactoryType(UClass* factoryType)
 {
