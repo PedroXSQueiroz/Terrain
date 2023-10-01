@@ -16,10 +16,7 @@ AWorldSection::AWorldSection()
 	PrimaryActorTick.bCanEverTick = true;
 
 	this->Ground = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GROUND"));
-	//this->RootComponent = this->Ground;
 	this->Ground->SetupAttachment(this->RootComponent);
-	//this->Ground->bUseAsyncCooking = true;
-
 }
 
 #pragma optimize( "", off )
