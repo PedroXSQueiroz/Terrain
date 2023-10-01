@@ -608,8 +608,8 @@ int UMeshFactoryMarshingCubes::BuildTriangleWithUniqueVertex(
 
 			if (cubes.Contains(adjascentIndex)) 
 			{
-				FCubeMeshData adjascentCube = cubes[adjascentIndex];
-				for (FMeshTriangleData currentTriangle : adjascentCube.GetTriangles()) 
+				FCubeMeshData currentAdjascentCube = cubes[adjascentIndex];
+				for (FMeshTriangleData currentTriangle : currentAdjascentCube.GetTriangles())
 				{
 					int adjascentVertex = 0;
 					

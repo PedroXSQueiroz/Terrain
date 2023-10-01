@@ -62,10 +62,14 @@ FORCEINLINE uint32 GetTypeHash(const FXYZIndex& Thing)
 USTRUCT(BlueprintType)
 struct FCubeMeshData 
 {
-
-	FCubeMeshData(TArray<FMeshTriangleData> triangles) : Triangles(triangles) {}
+	
+	GENERATED_BODY()
 
 public:
+	
+	FCubeMeshData() {}
+	
+	FCubeMeshData(TArray<FMeshTriangleData> triangles) : Triangles(triangles) {}
 
 	TArray<FMeshTriangleData> GetTriangles() 
 	{

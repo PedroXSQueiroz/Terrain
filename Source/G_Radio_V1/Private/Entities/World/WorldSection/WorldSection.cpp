@@ -77,7 +77,7 @@ void AWorldSection::BeginPlay()
 				{
 					FVector currentVertex = triangleData.Vertex[vertexIndex];
 					allVertex.Add(currentVertex);
-					//allTriangles.Add(allTriangles.Num());
+					allTriangles.Add(allTriangles.Num());
 
 					//----------------------------
 					// AT EACH TRIANGLE 
