@@ -177,6 +177,7 @@ private:
 	int BuildTriangleWithUniqueVertex(
 				FXYZIndex index
 			,	FMeshTriangleData& trianglesData
+			,	int vertexIndexOffset
 			,	TMap<FXYZIndex,	FCubeMeshData> cubes
 			,	int adjascentsEdges[12][3]
 			,	FVector adjascentsCubesOffsets[12][3]

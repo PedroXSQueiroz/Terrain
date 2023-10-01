@@ -49,9 +49,9 @@ void AWorldSection::BeginPlay()
 		
 		UObject* factoryInstance = this->MeshFactoryType.GetDefaultObject();
 		IMeshFactory* factory = Cast<IMeshFactory>(factoryInstance);
-		bool debugVertex = this->DebugVertex;
-		bool debugNormals = this->DebugNormals;
-		bool debugTangents = this->DebugTangents;
+		bool debugVertex	= this->DebugVertex;
+		bool debugNormals	= this->DebugNormals;
+		bool debugTangents	= this->DebugTangents;
 
 		AActor* owner = this;
 
@@ -100,12 +100,12 @@ void AWorldSection::BeginPlay()
 						(first.X + second.X + third.X) / 3,
 						(first.Y + second.Y + third.Y) / 3,
 						(first.Z + second.Z + third.Z) / 3
-					) * owner->GetActorScale();
+					);
 							
 					DrawDebugLine(
 						owner->GetWorld(),
 						triangleCenter,
-						triangleCenter + ( currentNormal * owner->GetActorScale()),
+						triangleCenter + (currentNormal /100),
 						FColor::Red,
 						true
 					);
@@ -142,7 +142,7 @@ void AWorldSection::BeginPlay()
 						owner->GetWorld(),
 						first,
 						first + (triangleProduct * owner->GetActorScale()),
-						FColor::Red,
+						FColor::Green,
 						true
 					);
 
@@ -150,7 +150,7 @@ void AWorldSection::BeginPlay()
 						owner->GetWorld(),
 						second,
 						second + (triangleProduct * owner->GetActorScale()),
-						FColor::Red,
+						FColor::Green,
 						true
 					);
 
@@ -158,7 +158,7 @@ void AWorldSection::BeginPlay()
 						owner->GetWorld(),
 						third,
 						third + (triangleProduct * owner->GetActorScale()),
-						FColor::Red,
+						FColor::Green,
 						true
 					);
 				}

@@ -364,10 +364,11 @@ FMeshData UMeshFactoryMarshingCubes::Build(AActor* owner)
 
 						if (this->RemoveOverlapedVertex)
 						{
-							for (FMeshTriangleData triangleData : cubeTrianglesDatas) 
+							for (FMeshTriangleData& triangleData : cubeTrianglesDatas) 
 								lastVertexIndex += this->BuildTriangleWithUniqueVertex(
 										currentCubeIndex
 									,	triangleData
+									,	lastVertexIndex
 									,	cubes
 									,	adjascentsEdges
 									,	adjascentsCubesOffsets
@@ -590,29 +591,31 @@ int UMeshFactoryMarshingCubes::BuildTriangleSequentially(int indexesOffset, FMes
 }
 
 #pragma optimize( "", off )
-float UMeshFactoryMarshingCubes::GetDensity(FXYZIndex index, TMap<FXYZIndex, float> densities)
-{
-	float density = densities.Contains(index) ? densities[index] : 0.0f;	 
-	return density;
-}
-#pragma optimize( "", on )
-
 int UMeshFactoryMarshingCubes::BuildTriangleWithUniqueVertex(
 		FXYZIndex index
 	,	FMeshTriangleData& trianglesData
+	,	int vertexIndexOffset
 	,	TMap<FXYZIndex, FCubeMeshData> cubes
 	,	int adjascentsEdges[12][3]
 	,	FVector adjascentsCubesOffsets[12][3])
 {
+	int vertexAdded = 0;
+	
 	for (int vertexIndex = 0; vertexIndex < trianglesData.Vertex.Num(); vertexIndex++) 
 	{
+		trianglesData.VertexIndexes.Add(vertexIndexOffset);
+		trianglesData.TrianglesVertexIndexes.Add(vertexIndexOffset);
+
+		vertexIndexOffset++;
+		vertexAdded++;
+		
 		int edgeIndex = trianglesData.Edges[vertexIndex];
 		
 		for (int adjascentCube = 0; adjascentCube < 3; adjascentCube++) 
 		{
-			int adjascentX = adjascentsCubesOffsets[edgeIndex][adjascentCube].X;
-			int adjascentY = adjascentsCubesOffsets[edgeIndex][adjascentCube].Y;
-			int adjascentZ = adjascentsCubesOffsets[edgeIndex][adjascentCube].Z;
+			int adjascentX = adjascentsCubesOffsets[edgeIndex][adjascentCube].X + index.X;
+			int adjascentY = adjascentsCubesOffsets[edgeIndex][adjascentCube].Y + index.Y;
+			int adjascentZ = adjascentsCubesOffsets[edgeIndex][adjascentCube].Z + index.Z;
 
 			FXYZIndex adjascentIndex = FXYZIndex(adjascentX, adjascentY, adjascentZ);
 
@@ -621,11 +624,17 @@ int UMeshFactoryMarshingCubes::BuildTriangleWithUniqueVertex(
 				FCubeMeshData currentAdjascentCube = cubes[adjascentIndex];
 				for (FMeshTriangleData currentTriangle : currentAdjascentCube.GetTriangles())
 				{
-					int adjascentVertex = 0;
+					int adjascentVertexIndex = 0;
 					
-					if ((adjascentVertex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][0])) != -1) {  }
-					if ((adjascentVertex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][1])) != -1) {  }
-					if ((adjascentVertex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][2])) != -1) {  }
+					if ((adjascentVertexIndex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][0])) != -1) {
+						trianglesData.TrianglesVertexIndexes[vertexIndex] = currentTriangle.VertexIndexes[adjascentVertexIndex];
+					}
+					if ((adjascentVertexIndex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][1])) != -1) { 
+						trianglesData.TrianglesVertexIndexes[vertexIndex] = currentTriangle.VertexIndexes[adjascentVertexIndex];
+					}
+					if ((adjascentVertexIndex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][2])) != -1) { 
+						trianglesData.TrianglesVertexIndexes[vertexIndex] = currentTriangle.VertexIndexes[adjascentVertexIndex];
+					}
 				}
 			}
 		
@@ -633,5 +642,14 @@ int UMeshFactoryMarshingCubes::BuildTriangleWithUniqueVertex(
 		
 	}
 
-	return 0;
+	return vertexAdded;
 }
+#pragma optimize( "", on )
+
+#pragma optimize( "", off )
+float UMeshFactoryMarshingCubes::GetDensity(FXYZIndex index, TMap<FXYZIndex, float> densities)
+{
+	float density = densities.Contains(index) ? densities[index] : 0.0f;
+	return density;
+}
+#pragma optimize( "", on )
