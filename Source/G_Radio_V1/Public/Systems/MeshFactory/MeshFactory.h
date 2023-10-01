@@ -14,7 +14,14 @@ struct G_RADIO_V1_API FMeshTriangleData
 
 public:
 
+	TArray<int> Edges;
+
+	TArray<int> VertexIndexes;
+
+	TArray<int> TrianglesVertexIndexes;
+	
 	TArray<FVector> Vertex;
+
 };
 
 /**

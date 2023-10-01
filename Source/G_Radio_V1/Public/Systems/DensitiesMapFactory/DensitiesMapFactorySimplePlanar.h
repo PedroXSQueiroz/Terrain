@@ -19,6 +19,6 @@ class G_RADIO_V1_API UDensitiesMapFactorySimplePlanar : public UObject, public I
 
 public:
 
-	virtual TMap<FDensityIndex, float> Build(UMarshingCubesConfig* config);
+	virtual TMap<FXYZIndex, float> Build(UMarshingCubesConfig* config);
 	
 };

@@ -6,9 +6,9 @@
 #include "JsonObjectConverter.h"
 #include "Serialization/JsonReader.h"
 
-TMap<FDensityIndex, float> UDensitiesMapFactoryFileReader::Build(UMarshingCubesConfig* config)
+TMap<FXYZIndex, float> UDensitiesMapFactoryFileReader::Build(UMarshingCubesConfig* config)
 {
-	TMap<FDensityIndex, float> densities = TMap<FDensityIndex, float>();
+	TMap<FXYZIndex, float> densities = TMap<FXYZIndex, float>();
 	
 	FString Content;
 
@@ -30,7 +30,7 @@ TMap<FDensityIndex, float> UDensitiesMapFactoryFileReader::Build(UMarshingCubesC
 				int y = FCString::Atoi(*(indexes[1]));
 				int z = FCString::Atoi(*(indexes[2]));
 
-				densities.Add(FDensityIndex(x, y, z), rawData->GetNumberField(currentDensityKey.Key));
+				densities.Add(FXYZIndex(x, y, z), rawData->GetNumberField(currentDensityKey.Key));
 			}
 	
 		}

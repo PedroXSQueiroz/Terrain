@@ -10,17 +10,17 @@
 #include "MeshFactoryMarshingCubes.generated.h"
 
 USTRUCT(BlueprintType)
-struct FDensityIndex
+struct FXYZIndex
 {
 	GENERATED_BODY()
 
 public:
 
-	FDensityIndex() {}
+	FXYZIndex() {}
 
-	FDensityIndex(int x, int y, int z) :X(x), Y(y), Z(z) {}
+	FXYZIndex(int x, int y, int z) :X(x), Y(y), Z(z) {}
 
-	FDensityIndex(FVector param) : X(param.X),Y(param.Y),Z(param.Z) {}
+	FXYZIndex(FVector param) : X(param.X),Y(param.Y),Z(param.Z) {}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int X;
@@ -31,12 +31,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	int Z;
 
-	bool operator==(const FDensityIndex& Other) const
+	bool operator==(const FXYZIndex& Other) const
 	{
 		return Equals(Other);
 	}
 
-	bool Equals(const FDensityIndex& Other) const
+	bool Equals(const FXYZIndex& Other) const
 	{
 		return	this->X == Other.X
 			&&	this->Y == Other.Y
@@ -52,12 +52,41 @@ public:
 #if UE_BUILD_DEBUG
 uint32 GetTypeHash(const FHashMeIfYouCan& Thing);
 #else // optimize by inlining in shipping and development builds
-FORCEINLINE uint32 GetTypeHash(const FDensityIndex& Thing)
+FORCEINLINE uint32 GetTypeHash(const FXYZIndex& Thing)
 {
-	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FDensityIndex));
+	uint32 Hash = FCrc::MemCrc32(&Thing, sizeof(FXYZIndex));
 	return Hash;
 }
 #endif
+
+USTRUCT(BlueprintType)
+struct FCubeMeshData 
+{
+
+	FCubeMeshData(TArray<FMeshTriangleData> triangles) : Triangles(triangles) {}
+
+public:
+
+	TArray<FMeshTriangleData> GetTriangles() 
+	{
+		return this->Triangles;
+	}
+
+	int TotalVertex() 
+	{
+		int total = 0;
+		for (FMeshTriangleData triangle : this->Triangles) 
+		{
+			total += triangle.Vertex.Num();
+		}
+
+		return total;
+	}
+
+protected:
+	
+	TArray<FMeshTriangleData> Triangles;
+};
 
 UCLASS(Blueprintable, BlueprintType, DefaultToInstanced, EditInlineNew)
 class UMarshingCubesConfig : public UObject 
@@ -109,16 +138,13 @@ public:
 	UPROPERTY()
 	UMarshingCubesConfig* Config;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
-	FString DebugDensitiesFilePath;
-
 	virtual TArray<FMeshTriangleData> Build(AActor* owner) override;
-
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL", meta = (MustImplement = "DensitiesMapFactory"))
 	TSubclassOf<UObject> DensitiesMapFactoryType;
 
-
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL", meta = (MustImplement = "DensitiesMapFactory"))
+	bool RemoveOverlapedVertex;
 
 private:
 
@@ -129,7 +155,7 @@ private:
 		,	int xIndex
 		,	int yIndex
 		,	int zIndex
-		,	TMap<FDensityIndex, float> densities
+		,	TMap<FXYZIndex, float> densities
 		,	AActor* owner);
 	
 	FVector InteroplateEdge(
@@ -138,7 +164,18 @@ private:
 		,	FVector secondVertex
 		,	float	secondVertexValue
 	);
+	
 
-	float GetDensity(FDensityIndex index, TMap<FDensityIndex, float> densities);
+	float GetDensity(FXYZIndex index, TMap<FXYZIndex, float> densities);
+
+	int BuildTriangleSequentially(int indexesOffset, FMeshTriangleData& trianglesData);
+	
+	int BuildTriangleWithUniqueVertex(
+				FXYZIndex index
+			,	FMeshTriangleData& trianglesData
+			,	TMap<FXYZIndex,	FCubeMeshData> cubes
+			,	int adjascentsEdges[12][3]
+			,	FVector adjascentsCubesOffsets[12][3]
+	);
 
 };

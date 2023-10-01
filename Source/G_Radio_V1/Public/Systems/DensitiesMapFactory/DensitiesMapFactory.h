@@ -25,5 +25,5 @@ class G_RADIO_V1_API IDensitiesMapFactory
 public:
 
 	UFUNCTION()
-	virtual TMap<FDensityIndex, float> Build(UMarshingCubesConfig* config) PURE_VIRTUAL(TEXT("NOT IMPLEMENTED YET"), return TMap<FDensityIndex, float>(); );
+	virtual TMap<FXYZIndex, float> Build(UMarshingCubesConfig* config) PURE_VIRTUAL(TEXT("NOT IMPLEMENTED YET"), return TMap<FXYZIndex, float>(); );
 };

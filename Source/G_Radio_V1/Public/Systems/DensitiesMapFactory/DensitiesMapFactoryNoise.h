@@ -28,10 +28,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float NoiseScale;
 
-	virtual TMap<FDensityIndex, float> Build(UMarshingCubesConfig* config) override;
+	virtual TMap<FXYZIndex, float> Build(UMarshingCubesConfig* config) override;
 
 private:
 
-	void SetDefaultIfNotPresent(FDensityIndex index, float defaultValue, TMap<FDensityIndex, float>& destiny);
+	void SetDefaultIfNotPresent(FXYZIndex index, float defaultValue, TMap<FXYZIndex, float>& destiny);
 	
 };

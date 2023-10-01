@@ -22,6 +22,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FString SourcePath;
 
-	virtual TMap<FDensityIndex, float> Build(UMarshingCubesConfig* config) override;
+	virtual TMap<FXYZIndex, float> Build(UMarshingCubesConfig* config) override;
 	
 };

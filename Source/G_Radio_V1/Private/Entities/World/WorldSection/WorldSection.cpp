@@ -55,12 +55,12 @@ void AWorldSection::BeginPlay()
 
 		FMeshCompletedEvent finishEvent = this->OnMeshCompleted();
 
-		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [
-					owner
-				,	debugVertex
-				,	debugNormals
-				,	factoryInstance
-				,	finishEvent]() {
+		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, 
+		[	owner
+		,	debugVertex
+		,	debugNormals
+		,	factoryInstance
+		,	finishEvent]() {
 			UE_LOG(LogTemp, Log, TEXT("BUILDING MESH"))
 			
 			IMeshFactory* factory = Cast<IMeshFactory>(factoryInstance);
@@ -77,7 +77,7 @@ void AWorldSection::BeginPlay()
 				{
 					FVector currentVertex = triangleData.Vertex[vertexIndex];
 					allVertex.Add(currentVertex);
-					allTriangles.Add(allTriangles.Num());
+					//allTriangles.Add(allTriangles.Num());
 
 					//----------------------------
 					// AT EACH TRIANGLE 
@@ -190,7 +190,7 @@ void AWorldSection::BeginPlay()
 					}
 
 
-				}
+				}	
 			}
 
 			finishEvent.Broadcast(allVertex, allTriangles, normals, tangents);

@@ -4,10 +4,10 @@
 #include "Systems/DensitiesMapFactory/DensitiesMapFactoryNoise.h"
 
 #pragma optimize( "", off )
-TMap<FDensityIndex, float> UDensitiesMapFactoryNoise::Build(UMarshingCubesConfig* config)
+TMap<FXYZIndex, float> UDensitiesMapFactoryNoise::Build(UMarshingCubesConfig* config)
 {
 	
-	TMap<FDensityIndex, float> densities = TMap<FDensityIndex, float>();
+	TMap<FXYZIndex, float> densities = TMap<FXYZIndex, float>();
 
 	float randFactor = FMath::RandRange(0.00001, 0.99999);
 
@@ -25,25 +25,25 @@ TMap<FDensityIndex, float> UDensitiesMapFactoryNoise::Build(UMarshingCubesConfig
 			int currentZ = FMath::FloorToInt(normalizedHeight);
 			float currentDensity = normalizedHeight - currentZ;
 
-			densities.Add(FDensityIndex(currentX, currentY, currentZ), currentDensity);
+			densities.Add(FXYZIndex(currentX, currentY, currentZ), currentDensity);
 
 			for (int densitiesBellow = currentZ - 1; densitiesBellow >= 0; densitiesBellow--) 
 			{
-				densities.Add(FDensityIndex(currentX, currentY, densitiesBellow), 1);
+				densities.Add(FXYZIndex(currentX, currentY, densitiesBellow), 1);
 			}
 			
 
 			int cubeXIndex = currentX % 2 == 0 ? currentX - 1 : FMath::FloorToInt((float)currentX / (float)2);
 			int cubeYIndex = currentX % 2 == 0 ? currentX - 1 : FMath::FloorToInt((float)currentY / (float)2);
 			int cubeZIndex = currentX % 2 == 0 ? currentX - 1 : FMath::FloorToInt((float)currentZ / (float)2);
-			this->SetDefaultIfNotPresent(FDensityIndex(0 + cubeXIndex, 0 + cubeYIndex, 0 + cubeZIndex), 0, densities);
-			this->SetDefaultIfNotPresent(FDensityIndex(1 + cubeXIndex, 0 + cubeYIndex, 0 + cubeZIndex), 0, densities);
-			this->SetDefaultIfNotPresent(FDensityIndex(0 + cubeXIndex, 1 + cubeYIndex, 0 + cubeZIndex), 0, densities);
-			this->SetDefaultIfNotPresent(FDensityIndex(1 + cubeXIndex, 1 + cubeYIndex, 0 + cubeZIndex), 0, densities);
-			this->SetDefaultIfNotPresent(FDensityIndex(0 + cubeXIndex, 0 + cubeYIndex, 1 + cubeZIndex), 0, densities);
-			this->SetDefaultIfNotPresent(FDensityIndex(1 + cubeXIndex, 0 + cubeYIndex, 1 + cubeZIndex), 0, densities);
-			this->SetDefaultIfNotPresent(FDensityIndex(0 + cubeXIndex, 1 + cubeYIndex, 1 + cubeZIndex), 0, densities);
-			this->SetDefaultIfNotPresent(FDensityIndex(1 + cubeXIndex, 1 + cubeYIndex, 1 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(0 + cubeXIndex, 0 + cubeYIndex, 0 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(1 + cubeXIndex, 0 + cubeYIndex, 0 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(0 + cubeXIndex, 1 + cubeYIndex, 0 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(1 + cubeXIndex, 1 + cubeYIndex, 0 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(0 + cubeXIndex, 0 + cubeYIndex, 1 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(1 + cubeXIndex, 0 + cubeYIndex, 1 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(0 + cubeXIndex, 1 + cubeYIndex, 1 + cubeZIndex), 0, densities);
+			this->SetDefaultIfNotPresent(FXYZIndex(1 + cubeXIndex, 1 + cubeYIndex, 1 + cubeZIndex), 0, densities);
 		}
 	}
 	
@@ -51,7 +51,7 @@ TMap<FDensityIndex, float> UDensitiesMapFactoryNoise::Build(UMarshingCubesConfig
 }
 #pragma optimize( "", on )
 
-void UDensitiesMapFactoryNoise::SetDefaultIfNotPresent(FDensityIndex index, float defaultValue, TMap<FDensityIndex, float>& destiny)
+void UDensitiesMapFactoryNoise::SetDefaultIfNotPresent(FXYZIndex index, float defaultValue, TMap<FXYZIndex, float>& destiny)
 {
 	if (!destiny.Contains(index))
 	{
