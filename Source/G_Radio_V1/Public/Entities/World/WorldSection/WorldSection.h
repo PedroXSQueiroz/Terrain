@@ -30,11 +30,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
 	class UMaterialInterface* MainGroundMaterial;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DEBUG")
 	bool DebugVertex;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DEBUG")
 	bool DebugNormals;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "DEBUG")
+	bool DebugTangents;
 
 	FMeshCompletedEvent& OnMeshCompleted()
 	{

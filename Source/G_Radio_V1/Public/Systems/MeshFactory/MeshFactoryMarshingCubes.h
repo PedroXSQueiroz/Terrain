@@ -142,7 +142,7 @@ public:
 	UPROPERTY()
 	UMarshingCubesConfig* Config;
 
-	virtual TArray<FMeshTriangleData> Build(AActor* owner) override;
+	virtual FMeshData Build(AActor* owner) override;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GENERAL", meta = (MustImplement = "DensitiesMapFactory"))
 	TSubclassOf<UObject> DensitiesMapFactoryType;
@@ -172,7 +172,7 @@ private:
 
 	float GetDensity(FXYZIndex index, TMap<FXYZIndex, float> densities);
 
-	int BuildTriangleSequentially(int indexesOffset, FMeshTriangleData& trianglesData);
+	int BuildTriangleSequentially(int indexesOffset, FMeshTriangleData& triangleData);
 	
 	int BuildTriangleWithUniqueVertex(
 				FXYZIndex index

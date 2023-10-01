@@ -14,14 +14,39 @@ struct G_RADIO_V1_API FMeshTriangleData
 
 public:
 
+	FMeshTriangleData(): 
+		Edges(TArray<int>()),
+		VertexIndexes(TArray<int>()),
+		TrianglesVertexIndexes(TArray<int>()),
+		Vertex(TArray<FVector>())
+	{}
+
+	UPROPERTY()
 	TArray<int> Edges;
 
+	UPROPERTY()
 	TArray<int> VertexIndexes;
 
+	UPROPERTY()
 	TArray<int> TrianglesVertexIndexes;
 	
+	UPROPERTY()
 	TArray<FVector> Vertex;
+};
 
+USTRUCT()
+struct G_RADIO_V1_API FMeshData 
+{
+
+	GENERATED_BODY()	
+
+public:
+
+	FMeshData() :Vertex(TArray<FVector>()), Triangles(TArray<int>()) {}
+	
+	TArray<int> Triangles;
+	
+	TArray<FVector> Vertex;
 };
 
 /**
@@ -40,6 +65,6 @@ class G_RADIO_V1_API IMeshFactory{
 public:
 
 	UFUNCTION()
-	virtual TArray<FMeshTriangleData> Build(AActor* owner) PURE_VIRTUAL(TEXT("NOT IMPLEMENTED YET"), return TArray<FMeshTriangleData>(););
+	virtual FMeshData Build(AActor* owner) PURE_VIRTUAL(TEXT("NOT IMPLEMENTED YET"), return FMeshData(););
 
 };

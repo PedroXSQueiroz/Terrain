@@ -48,8 +48,10 @@ void AWorldSection::BeginPlay()
 
 		
 		UObject* factoryInstance = this->MeshFactoryType.GetDefaultObject();
+		IMeshFactory* factory = Cast<IMeshFactory>(factoryInstance);
 		bool debugVertex = this->DebugVertex;
 		bool debugNormals = this->DebugNormals;
+		bool debugTangents = this->DebugTangents;
 
 		AActor* owner = this;
 
@@ -59,141 +61,114 @@ void AWorldSection::BeginPlay()
 		[	owner
 		,	debugVertex
 		,	debugNormals
-		,	factoryInstance
-		,	finishEvent]() {
+		,	factory
+		,	finishEvent
+		,	debugTangents]() {
 			UE_LOG(LogTemp, Log, TEXT("BUILDING MESH"))
 			
-			IMeshFactory* factory = Cast<IMeshFactory>(factoryInstance);
-			TArray<FMeshTriangleData> triangles = factory->Build(owner);
+			FMeshData meshData = factory->Build(owner);
 
-			TArray<FVector> allVertex			= TArray<FVector>();
-			TArray<int> allTriangles			= TArray<int>();
 			TArray<FVector> normals				= TArray<FVector>();
 			TArray<FProcMeshTangent> tangents	= TArray<FProcMeshTangent>();
 
-			for (FMeshTriangleData triangleData : triangles)
+			for (int vertexTriangleIndex = 2; vertexTriangleIndex < meshData.Triangles.Num(); vertexTriangleIndex += 3) 
 			{
-				for (int vertexIndex = 0; vertexIndex < triangleData.Vertex.Num(); vertexIndex++)
+				int lastVertexIndex = vertexTriangleIndex;
+						
+				FVector first =		meshData.Vertex[lastVertexIndex - 2] * owner->GetActorScale();
+				FVector second =	meshData.Vertex[lastVertexIndex - 1] * owner->GetActorScale();
+				FVector third =		meshData.Vertex[lastVertexIndex] * owner->GetActorScale();
+				
+				//----------------------------
+				// NORMALS 
+				//----------------------------
+				
+				FVector a = second - first;
+				FVector b = third - first;
+
+				FVector currentNormal = FVector(
+					(a.Y * b.Z) - (a.Z * b.Y),
+					(a.Z * b.X) - (a.X * b.Z),
+					(a.X * b.Y) - (a.Y * b.Z)
+				) * -1;
+
+				normals.Add(currentNormal);
+						
+				if (debugNormals) 
 				{
-					FVector currentVertex = triangleData.Vertex[vertexIndex];
-					allVertex.Add(currentVertex);
-					allTriangles.Add(allTriangles.Num());
-
-					//----------------------------
-					// AT EACH TRIANGLE 
-					//----------------------------
-					if (allVertex.Num() % 3 == 0)
-					{
-						//----------------------------
-						// NORMALS 
-						//----------------------------
-						
-						int lastVertexIndex = allVertex.Num() - 1;
-						
-						FVector first =		allVertex[lastVertexIndex - 2] * owner->GetActorScale();
-						FVector second =	allVertex[lastVertexIndex - 1] * owner->GetActorScale();
-						FVector third =		allVertex[lastVertexIndex] * owner->GetActorScale();
-
-						FVector a = second - first;
-						FVector b = third - first;
-
-						FVector currentNormal = FVector(
-							(a.Y * b.Z) - (a.Z * b.Y),
-							(a.Z * b.X) - (a.X * b.Z),
-							(a.X * b.Y) - (a.Y * b.Z)
-						) * -1;
-
-						normals.Add(currentNormal);
-						
-						if (debugNormals) 
-						{
-							FVector triangleCenter = FVector(
-								(first.X + second.X + third.X) / 3,
-								(first.Y + second.Y + third.Y) / 3,
-								(first.Z + second.Z + third.Z) / 3
-							) * owner->GetActorScale();
+					FVector triangleCenter = FVector(
+						(first.X + second.X + third.X) / 3,
+						(first.Y + second.Y + third.Y) / 3,
+						(first.Z + second.Z + third.Z) / 3
+					) * owner->GetActorScale();
 							
-							DrawDebugLine(
-								owner->GetWorld(),
-								triangleCenter,
-								triangleCenter + ( currentNormal * owner->GetActorScale()),
-								FColor::Red,
-								true
-							);
+					DrawDebugLine(
+						owner->GetWorld(),
+						triangleCenter,
+						triangleCenter + ( currentNormal * owner->GetActorScale()),
+						FColor::Red,
+						true
+					);
 
-							DrawDebugSphere(
-								owner->GetWorld(),
-								triangleCenter,
-								5,
-								6,
-								FColor::Red,
-								true
-							);
-						}
+					DrawDebugSphere(
+						owner->GetWorld(),
+						triangleCenter,
+						5,
+						6,
+						FColor::Red,
+						true
+					);
+				}
 						
-						//----------------------------
-						// NORMALS 
-						//----------------------------
+				//----------------------------
+				// NORMALS 
+				//----------------------------
 						
-						//----------------------------
-						// TANGENTS
-						//----------------------------
+				//----------------------------
+				// TANGENTS
+				//----------------------------
 						
-						FVector triangleProduct = FVector::CrossProduct(second - first, third - first) * -1;
+				FVector triangleProduct = FVector::CrossProduct(second - first, third - first) * -1;
 						
-						triangleProduct.Normalize();
+				triangleProduct.Normalize();
 
-						tangents.Add(FProcMeshTangent(triangleProduct, false));
-						tangents.Add(FProcMeshTangent(triangleProduct, false));
-						tangents.Add(FProcMeshTangent(triangleProduct, false));
+				tangents.Add(FProcMeshTangent(triangleProduct, false));
+				tangents.Add(FProcMeshTangent(triangleProduct, false));
+				tangents.Add(FProcMeshTangent(triangleProduct, false));
 
-						DrawDebugLine(
-							owner->GetWorld(),
-							first,
-							first + (triangleProduct * owner->GetActorScale()),
-							FColor::Red,
-							true
-						);
+				if (debugTangents) 
+				{
+					DrawDebugLine(
+						owner->GetWorld(),
+						first,
+						first + (triangleProduct * owner->GetActorScale()),
+						FColor::Red,
+						true
+					);
 
-						DrawDebugLine(
-							owner->GetWorld(),
-							second,
-							second + (triangleProduct * owner->GetActorScale()),
-							FColor::Red,
-							true
-						);
+					DrawDebugLine(
+						owner->GetWorld(),
+						second,
+						second + (triangleProduct * owner->GetActorScale()),
+						FColor::Red,
+						true
+					);
 
-						DrawDebugLine(
-							owner->GetWorld(),
-							third,
-							third + (triangleProduct * owner->GetActorScale()),
-							FColor::Red,
-							true
-						);
+					DrawDebugLine(
+						owner->GetWorld(),
+						third,
+						third + (triangleProduct * owner->GetActorScale()),
+						FColor::Red,
+						true
+					);
+				}
 
-						//----------------------------
-						// TANGENTS
-						//----------------------------
-					}
-
-
-					if (debugVertex)
-					{
-						DrawDebugSphere(
-							owner->GetWorld(),
-							currentVertex * owner->GetActorScale(),
-							5,
-							6,
-							FColor::Red,
-							true
-						);
-					}
-
-
-				}	
+				//----------------------------
+				// TANGENTS
+				//----------------------------
 			}
 
-			finishEvent.Broadcast(allVertex, allTriangles, normals, tangents);
+			finishEvent.Broadcast(meshData.Vertex, meshData.Triangles, normals, tangents);
 		});
 		
 	}

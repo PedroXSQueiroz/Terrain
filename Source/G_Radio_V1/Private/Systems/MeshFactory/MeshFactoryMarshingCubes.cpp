@@ -12,7 +12,8 @@ UMeshFactoryMarshingCubes::UMeshFactoryMarshingCubes()
 	this->Config = NewObject<UMarshingCubesConfig>();
 }
 
-TArray<FMeshTriangleData> UMeshFactoryMarshingCubes::Build(AActor* owner)
+#pragma optimize( "", off )
+FMeshData UMeshFactoryMarshingCubes::Build(AActor* owner)
 {
 	this->Config = this->ConfigType.GetDefaultObject();
 	
@@ -328,8 +329,10 @@ TArray<FMeshTriangleData> UMeshFactoryMarshingCubes::Build(AActor* owner)
 
 
 
-	TArray<FMeshTriangleData> triangles = TArray<FMeshTriangleData>();
-	
+	//TArray<FMeshTriangleData> triangles = TArray<FMeshTriangleData>();
+
+	FMeshData meshData = FMeshData();
+
 	int lastVertexIndex = 0;
 
 	if (this->DensitiesMapFactoryType) 
@@ -372,13 +375,19 @@ TArray<FMeshTriangleData> UMeshFactoryMarshingCubes::Build(AActor* owner)
 						}
 						else
 						{
-							for (FMeshTriangleData triangleData : cubeTrianglesDatas) 
-								lastVertexIndex += this->BuildTriangleSequentially(lastVertexIndex, triangleData);
+							for (FMeshTriangleData& triangleData : cubeTrianglesDatas) 
+							{
+								lastVertexIndex += this->BuildTriangleSequentially(	lastVertexIndex, triangleData);
+							}
 						}
 
 						cubes.Add(currentCubeIndex, FCubeMeshData(cubeTrianglesDatas));
 						
-						for (FMeshTriangleData cubeTrianglesData : cubeTrianglesDatas) triangles.Add(cubeTrianglesData); 
+						//for (FMeshTriangleData cubeTrianglesData : cubeTrianglesDatas) triangles.Add(cubeTrianglesData); 
+						for (FMeshTriangleData cubeTrianglesData : cubeTrianglesDatas) {
+							for (FVector vertex : cubeTrianglesData.Vertex) meshData.Vertex.Add(vertex);
+							for (int triangleIndex : cubeTrianglesData.TrianglesVertexIndexes) meshData.Triangles.Add(triangleIndex);
+						}
 						
 					}
 				}
@@ -386,8 +395,9 @@ TArray<FMeshTriangleData> UMeshFactoryMarshingCubes::Build(AActor* owner)
 		}
 	}
 	
-	return triangles;
+	return meshData;
 }
+#pragma optimize( "", on )
 
 #pragma optimize( "", off )
 TArray<FMeshTriangleData> UMeshFactoryMarshingCubes::GetTrianglesOfCube(
@@ -563,15 +573,15 @@ FVector UMeshFactoryMarshingCubes::InteroplateEdge(
 	);
 }
 
-int UMeshFactoryMarshingCubes::BuildTriangleSequentially(int indexesOffset, FMeshTriangleData& trianglesData)
+int UMeshFactoryMarshingCubes::BuildTriangleSequentially(int indexesOffset, FMeshTriangleData& vertexData)
 {
 	int vertexAdded = 0;
-	trianglesData.VertexIndexes.Empty();
+	vertexData.VertexIndexes.Empty();
 	
-	for (int currentVertexIndex = 0; currentVertexIndex < trianglesData.Vertex.Num(); currentVertexIndex++) 
+	for (int currentVertexIndex = 0; currentVertexIndex < vertexData.Vertex.Num(); currentVertexIndex++)
 	{
-		trianglesData.VertexIndexes.Add(indexesOffset);
-		trianglesData.TrianglesVertexIndexes.Add(indexesOffset);
+		vertexData.VertexIndexes.Add(indexesOffset);
+		vertexData.TrianglesVertexIndexes.Add(indexesOffset);
 		vertexAdded++;
 		indexesOffset++;
 	}
