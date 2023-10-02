@@ -4,9 +4,9 @@
 #include "Entities/World/WorldSection/WorldSection.h"
 
 #include "Async/AsyncWork.h"
+#include "KismetProceduralMeshLibrary.h"
 
 #include "Systems/MeshFactory/MeshFactory.h"
-
 #include "ProceduralMeshComponent.h"
 
 // Sets default values
@@ -17,6 +17,17 @@ AWorldSection::AWorldSection()
 
 	this->Ground = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("GROUND"));
 	this->Ground->SetupAttachment(this->RootComponent);
+	this->Ground->bUseComplexAsSimpleCollision = false;
+	this->Ground->SetSimulatePhysics(true);
+	this->Ground->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
+	this->Ground->SetCollisionProfileName(TEXT("PhysicsActor"));
+	this->Ground->SetCollisionResponseToAllChannels(ECR_Block);
+	this->Ground->SetEnableGravity(true);
+	this->Ground->WakeRigidBody();
+	this->Ground->SetMobility(EComponentMobility::Movable);
+
+	this->SetActorEnableCollision(true);
+
 }
 
 #pragma optimize( "", off )
@@ -42,7 +53,10 @@ void AWorldSection::BeginPlay()
 
 			this->Ground->UpdateBounds();
 			this->Ground->SetMaterial(0, this->MainGroundMaterial);
-
+			this->Ground->ClearCollisionConvexMeshes();
+			this->Ground->AddCollisionConvexMesh(vertex);
+			this->Ground->UpdatePhysicsVolume(true);
+			
 			UE_LOG(LogTemp, Log, TEXT("FINISEHD MESH"))
 		});
 
@@ -71,102 +85,7 @@ void AWorldSection::BeginPlay()
 			TArray<FVector> normals				= TArray<FVector>();
 			TArray<FProcMeshTangent> tangents	= TArray<FProcMeshTangent>();
 
-			for (int vertexTriangleIndex = 2; vertexTriangleIndex < meshData.Triangles.Num(); vertexTriangleIndex += 3) 
-			{
-				int lastVertexIndex = vertexTriangleIndex;
-						
-				FVector first =		meshData.Vertex[lastVertexIndex - 2] * owner->GetActorScale();
-				FVector second =	meshData.Vertex[lastVertexIndex - 1] * owner->GetActorScale();
-				FVector third =		meshData.Vertex[lastVertexIndex] * owner->GetActorScale();
-				
-				//----------------------------
-				// NORMALS 
-				//----------------------------
-				
-				FVector a = second - first;
-				FVector b = third - first;
-
-				FVector currentNormal = FVector(
-					(a.Y * b.Z) - (a.Z * b.Y),
-					(a.Z * b.X) - (a.X * b.Z),
-					(a.X * b.Y) - (a.Y * b.Z)
-				) * -1;
-
-				normals.Add(currentNormal);
-						
-				if (debugNormals) 
-				{
-					FVector triangleCenter = FVector(
-						(first.X + second.X + third.X) / 3,
-						(first.Y + second.Y + third.Y) / 3,
-						(first.Z + second.Z + third.Z) / 3
-					);
-							
-					DrawDebugLine(
-						owner->GetWorld(),
-						triangleCenter,
-						triangleCenter + (currentNormal /100),
-						FColor::Red,
-						true
-					);
-
-					DrawDebugSphere(
-						owner->GetWorld(),
-						triangleCenter,
-						5,
-						6,
-						FColor::Red,
-						true
-					);
-				}
-						
-				//----------------------------
-				// NORMALS 
-				//----------------------------
-						
-				//----------------------------
-				// TANGENTS
-				//----------------------------
-						
-				FVector triangleProduct = FVector::CrossProduct(second - first, third - first) * -1;
-						
-				triangleProduct.Normalize();
-
-				tangents.Add(FProcMeshTangent(triangleProduct, false));
-				tangents.Add(FProcMeshTangent(triangleProduct, false));
-				tangents.Add(FProcMeshTangent(triangleProduct, false));
-
-				if (debugTangents) 
-				{
-					DrawDebugLine(
-						owner->GetWorld(),
-						first,
-						first + (triangleProduct * owner->GetActorScale()),
-						FColor::Green,
-						true
-					);
-
-					DrawDebugLine(
-						owner->GetWorld(),
-						second,
-						second + (triangleProduct * owner->GetActorScale()),
-						FColor::Green,
-						true
-					);
-
-					DrawDebugLine(
-						owner->GetWorld(),
-						third,
-						third + (triangleProduct * owner->GetActorScale()),
-						FColor::Green,
-						true
-					);
-				}
-
-				//----------------------------
-				// TANGENTS
-				//----------------------------
-			}
+			UKismetProceduralMeshLibrary::CalculateTangentsForMesh(meshData.Vertex, meshData.Triangles, TArray<FVector2D>(), normals, tangents );
 
 			finishEvent.Broadcast(meshData.Vertex, meshData.Triangles, normals, tangents);
 		});

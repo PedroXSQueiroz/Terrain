@@ -358,7 +358,8 @@ FMeshData UMeshFactoryMarshingCubes::Build(AActor* owner)
 							, currentCubeY
 							, currentCubeZ
 							, densities
-							, owner);
+							, owner
+						);
 
 						FXYZIndex currentCubeIndex = FXYZIndex(currentCubeX, currentCubeY, currentCubeZ);
 
@@ -386,7 +387,7 @@ FMeshData UMeshFactoryMarshingCubes::Build(AActor* owner)
 						
 						//for (FMeshTriangleData cubeTrianglesData : cubeTrianglesDatas) triangles.Add(cubeTrianglesData); 
 						for (FMeshTriangleData cubeTrianglesData : cubeTrianglesDatas) {
-							for (FVector vertex : cubeTrianglesData.Vertex) meshData.Vertex.Add(vertex);
+							for (FVector vertex : cubeTrianglesData.Vertex) meshData.Vertex.Add(vertex * this->Config->Scale);
 							for (int triangleIndex : cubeTrianglesData.TrianglesVertexIndexes) meshData.Triangles.Add(triangleIndex);
 						}
 						

@@ -121,6 +121,9 @@ public:
 	int EndZCubes;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float Scale;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool Debug;
 };
 
