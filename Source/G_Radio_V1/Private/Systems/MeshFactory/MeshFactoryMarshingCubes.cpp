@@ -328,9 +328,6 @@ FMeshData UMeshFactoryMarshingCubes::Build(AActor* owner)
 	};
 
 
-
-	//TArray<FMeshTriangleData> triangles = TArray<FMeshTriangleData>();
-
 	FMeshData meshData = FMeshData();
 
 	int lastVertexIndex = 0;
@@ -387,10 +384,49 @@ FMeshData UMeshFactoryMarshingCubes::Build(AActor* owner)
 						
 						//for (FMeshTriangleData cubeTrianglesData : cubeTrianglesDatas) triangles.Add(cubeTrianglesData); 
 						for (FMeshTriangleData cubeTrianglesData : cubeTrianglesDatas) {
-							for (FVector vertex : cubeTrianglesData.Vertex) meshData.Vertex.Add(vertex * this->Config->Scale);
+							for (int vertexIndex = 0; vertexIndex < cubeTrianglesData.Vertex.Num(); vertexIndex++) {
+								
+								FVector vertex = cubeTrianglesData.Vertex[vertexIndex];
+								
+								if (this->Config->DebugVertices) 
+								{
+									FVector vertexRealPosition = FVector(vertex.X, vertex.Y, vertex.Z)* this->Config->Scale;
+									
+									DrawDebugSphere(
+										owner->GetWorld(),
+											vertexRealPosition
+										,	3
+										,	6
+										,	FColor::Red
+										,	true
+									);
+
+									if (this->Config->DebugVerticesData) 
+									{
+										FString offset("");
+										int textOffsets = 0;
+
+										for (FVector storagedVertex : meshData.Vertex)
+										{
+											if (storagedVertex.Equals(vertexRealPosition)) {
+												offset.Append("\n"); 
+												textOffsets++;
+											}
+										}
+									
+										DrawDebugString(
+											owner->GetWorld(),
+											vertexRealPosition + this->Config->DebugVerticesDataOffset,
+											FString::Printf(TEXT("%s tri(%i) poly(%i)"), *offset, vertexIndex, cubeTrianglesData.TrianglesVertexIndexes[vertexIndex])
+										);
+									}
+								}
+
+								meshData.Vertex.Add(vertex* this->Config->Scale);
+							}
 							for (int triangleIndex : cubeTrianglesData.TrianglesVertexIndexes) meshData.Triangles.Add(triangleIndex);
 						}
-						
+
 					}
 				}
 			}
@@ -421,7 +457,7 @@ TArray<FMeshTriangleData> UMeshFactoryMarshingCubes::GetTrianglesOfCube(
 	FXYZIndex cubeInit = FXYZIndex(xIndex, yIndex, zIndex);
 
 	TArray<FXYZIndex> cubeDensitiesIndexes = TArray<FXYZIndex>();
-	cubeDensitiesIndexes.Add(cubeInit);															// 0 ATRÁS	, ESQUERDA	, BAIXO (0,0,0)
+	cubeDensitiesIndexes.Add(cubeInit);														// 0 ATRÁS	, ESQUERDA	, BAIXO (0,0,0)
 	cubeDensitiesIndexes.Add(FXYZIndex(cubeInit.X,		cubeInit.Y + 1, cubeInit.Z));		// 1 ATRÁS	, DIREITA	, BAIXO	(0,1,0)
 	cubeDensitiesIndexes.Add(FXYZIndex(cubeInit.X + 1,	cubeInit.Y + 1, cubeInit.Z));		// 2 FRENTE	, DIREITA	, BAIXO	(1,1,0)
 	cubeDensitiesIndexes.Add(FXYZIndex(cubeInit.X + 1,	cubeInit.Y,		cubeInit.Z));		// 3 FRENTE	, ESQUERDA	, BAIXO	(1,0,0)
@@ -430,34 +466,63 @@ TArray<FMeshTriangleData> UMeshFactoryMarshingCubes::GetTrianglesOfCube(
 	cubeDensitiesIndexes.Add(FXYZIndex(cubeInit.X + 1,  cubeInit.Y + 1, cubeInit.Z + 1));	// 6 FRENTE	, DIREITA	, CIMA	(1,1,1)
 	cubeDensitiesIndexes.Add(FXYZIndex(cubeInit.X + 1,  cubeInit.Y,		cubeInit.Z + 1));	// 7 FRENTE	, ESQUERDA	, CIMA	(1,0,1)
 
-	if (this->Config->Debug) 
+	if (this->Config->DebugEdges) 
+	{
+		for (int currentEdgeConnection = 0; currentEdgeConnection < 12; currentEdgeConnection++) 
+		{
+			int startIndex = edgeConnections[currentEdgeConnection][0];
+			int endIndex = edgeConnections[currentEdgeConnection][1];
+
+			FVector startPosition = cubeDensitiesIndexes[startIndex].ToVector(this->Config->Scale);
+			FVector endPosition = cubeDensitiesIndexes[endIndex].ToVector(this->Config->Scale);
+			DrawDebugLine(
+				owner->GetWorld(),
+				startPosition,
+				endPosition,
+				FColor::Blue,
+				true
+			);
+
+			if (this->Config->DebugEdgesData) 
+			{
+				DrawDebugString(
+					owner->GetWorld(),
+					(startPosition + endPosition) / 2,
+					FString::Printf(TEXT("Edge(%i) => Cube(%i,%i,%i)"), currentEdgeConnection, xIndex, yIndex, zIndex)
+				);
+			}
+		}
+	}
+
+	if (this->Config->DebugDensities) 
 	{
 		for (FXYZIndex index : cubeDensitiesIndexes) 
 		{
 			DrawDebugSphere(
 				owner->GetWorld(),
-				FVector(index.X, index.Y, index.Z) * owner->GetActorScale()
+				FVector(index.X, index.Y, index.Z) * this->Config->Scale
 				, 3
-				, 12
+				, 6
 				, FColor::Blue
 				, true
 			);
 
 			DrawDebugString(
 				owner->GetWorld(),
-				FVector(index.X, index.Y, index.Z) * owner->GetActorScale(),
+				FVector(index.X, index.Y, index.Z) * this->Config->Scale,
 				FString::Printf(TEXT("XYZ(%i,%i,%i) => D(%.2f)"), index.X, index.Y, index.Z, this->GetDensity(index, densities))
 			);
-
 		}
+	}
 	
+	if (this->Config->DebugDensities || this->Config->DebugEdges) 
+	{
 		DrawDebugString(
 			owner->GetWorld(),
-			(FVector(xIndex , yIndex, zIndex) * owner->GetActorScale()) + ( owner->GetActorScale() / 2 ),
+			(FVector(xIndex , yIndex, zIndex) * this->Config->Scale) + ( this->Config->Scale / 2 ),
 			FString::Printf(TEXT("Cube(%i,%i,%i)"), xIndex, yIndex, zIndex)
 		);
 	}
-
 	
 	int cubeIndex = 0;
 
@@ -578,11 +643,12 @@ FVector UMeshFactoryMarshingCubes::InteroplateEdge(
 int UMeshFactoryMarshingCubes::BuildTriangleSequentially(int indexesOffset, FMeshTriangleData& vertexData)
 {
 	int vertexAdded = 0;
-	vertexData.VertexIndexes.Empty();
-	
+	//vertexData.VertexIndexes.Empty();
+	vertexData.TrianglesVertexIndexes.Empty();
+
 	for (int currentVertexIndex = 0; currentVertexIndex < vertexData.Vertex.Num(); currentVertexIndex++)
 	{
-		vertexData.VertexIndexes.Add(indexesOffset);
+		//vertexData.VertexIndexes.Add(indexesOffset);
 		vertexData.TrianglesVertexIndexes.Add(indexesOffset);
 		vertexAdded++;
 		indexesOffset++;
@@ -604,37 +670,31 @@ int UMeshFactoryMarshingCubes::BuildTriangleWithUniqueVertex(
 	
 	for (int vertexIndex = 0; vertexIndex < trianglesData.Vertex.Num(); vertexIndex++) 
 	{
-		trianglesData.VertexIndexes.Add(vertexIndexOffset);
+		//trianglesData.VertexIndexes.Add(vertexIndexOffset);
 		trianglesData.TrianglesVertexIndexes.Add(vertexIndexOffset);
 
 		vertexIndexOffset++;
 		vertexAdded++;
 		
-		int edgeIndex = trianglesData.Edges[vertexIndex];
+		int edge = trianglesData.Edges[vertexIndex];
 		
 		for (int adjascentCube = 0; adjascentCube < 3; adjascentCube++) 
 		{
-			int adjascentX = adjascentsCubesOffsets[edgeIndex][adjascentCube].X + index.X;
-			int adjascentY = adjascentsCubesOffsets[edgeIndex][adjascentCube].Y + index.Y;
-			int adjascentZ = adjascentsCubesOffsets[edgeIndex][adjascentCube].Z + index.Z;
+			int adjascentX = adjascentsCubesOffsets[edge][adjascentCube].X + index.X;
+			int adjascentY = adjascentsCubesOffsets[edge][adjascentCube].Y + index.Y;
+			int adjascentZ = adjascentsCubesOffsets[edge][adjascentCube].Z + index.Z;
 
-			FXYZIndex adjascentIndex = FXYZIndex(adjascentX, adjascentY, adjascentZ);
+			FXYZIndex adjascentCubeIndex = FXYZIndex(adjascentX, adjascentY, adjascentZ);
 
-			if (cubes.Contains(adjascentIndex)) 
+			if (cubes.Contains(adjascentCubeIndex)) 
 			{
-				FCubeMeshData currentAdjascentCube = cubes[adjascentIndex];
+				FCubeMeshData currentAdjascentCube = cubes[adjascentCubeIndex];
 				for (FMeshTriangleData currentTriangle : currentAdjascentCube.GetTriangles())
 				{
 					int adjascentVertexIndex = 0;
 					
-					if ((adjascentVertexIndex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][0])) != -1) {
-						trianglesData.TrianglesVertexIndexes[vertexIndex] = currentTriangle.VertexIndexes[adjascentVertexIndex];
-					}
-					if ((adjascentVertexIndex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][1])) != -1) { 
-						trianglesData.TrianglesVertexIndexes[vertexIndex] = currentTriangle.VertexIndexes[adjascentVertexIndex];
-					}
-					if ((adjascentVertexIndex = currentTriangle.Edges.Find(adjascentsEdges[edgeIndex][2])) != -1) { 
-						trianglesData.TrianglesVertexIndexes[vertexIndex] = currentTriangle.VertexIndexes[adjascentVertexIndex];
+					if ((adjascentVertexIndex = currentTriangle.Edges.Find(adjascentsEdges[edge][adjascentCube])) != -1) {
+						trianglesData.TrianglesVertexIndexes[vertexIndex] = currentTriangle.TrianglesVertexIndexes[adjascentVertexIndex];
 					}
 				}
 			}

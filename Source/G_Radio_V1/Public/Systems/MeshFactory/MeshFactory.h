@@ -16,7 +16,7 @@ public:
 
 	FMeshTriangleData(): 
 		Edges(TArray<int>()),
-		VertexIndexes(TArray<int>()),
+		//VertexIndexes(TArray<int>()),
 		TrianglesVertexIndexes(TArray<int>()),
 		Vertex(TArray<FVector>())
 	{}
@@ -24,8 +24,8 @@ public:
 	UPROPERTY()
 	TArray<int> Edges;
 
-	UPROPERTY()
-	TArray<int> VertexIndexes;
+	/*UPROPERTY()
+	TArray<int> VertexIndexes;*/
 
 	UPROPERTY()
 	TArray<int> TrianglesVertexIndexes;

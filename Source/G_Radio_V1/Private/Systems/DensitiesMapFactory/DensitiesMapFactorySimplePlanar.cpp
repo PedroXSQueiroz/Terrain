@@ -7,7 +7,7 @@ TMap<FXYZIndex, float> UDensitiesMapFactorySimplePlanar::Build(UMarshingCubesCon
 {
 	TMap<FXYZIndex, float> densitties = TMap<FXYZIndex, float>();
 	
-	for (int currentCubeX = 0; config->StartXCubes <= config->EndXCubes; currentCubeX++)
+	for (int currentCubeX = config->StartXCubes; currentCubeX <= config->EndXCubes; currentCubeX++)
 	{
 		for (int currentCubeY = config->StartYCubes; currentCubeY <= config->EndYCubes; currentCubeY++)
 		{

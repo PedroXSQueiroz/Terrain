@@ -43,6 +43,11 @@ public:
 			&&	this->Z == Other.Z;
 	}
 
+	FVector ToVector(float scale = 1) 
+	{
+		return FVector(this->X, this->Y, this->Z) * scale;
+	}
+
 	FString ToString() 
 	{
 		return FString::Printf( TEXT( "%i,%i,%i"), this->X, this->Y, this->Z);
@@ -123,8 +128,26 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float Scale;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	bool Debug;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	bool DebugVertices;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	bool DebugVerticesData;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	FVector DebugVerticesDataOffset;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	bool DebugEdges;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	bool DebugEdgesData;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	bool DebugDensities;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Debug")
+	bool DebugData;
 };
 
 /**

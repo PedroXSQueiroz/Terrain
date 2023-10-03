@@ -22,9 +22,10 @@ AWorldSection::AWorldSection()
 	this->Ground->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
 	this->Ground->SetCollisionProfileName(TEXT("PhysicsActor"));
 	this->Ground->SetCollisionResponseToAllChannels(ECR_Block);
-	this->Ground->SetEnableGravity(true);
+	this->Ground->SetEnableGravity(false);
 	this->Ground->WakeRigidBody();
 	this->Ground->SetMobility(EComponentMobility::Movable);
+
 
 	this->SetActorEnableCollision(true);
 
@@ -40,6 +41,8 @@ void AWorldSection::BeginPlay()
 	{
 		
 		this->OnMeshCompleted().AddLambda([&](TArray<FVector> vertex, TArray<int> triangles, TArray<FVector> normals, TArray<FProcMeshTangent> tangents) {
+			//UProceduralMeshComponent* ground = NewObject<UProceduralMeshComponent>(this);
+			
 			this->Ground->CreateMeshSection(
 				0
 				, vertex
@@ -51,11 +54,18 @@ void AWorldSection::BeginPlay()
 				, false
 			);
 
-			this->Ground->UpdateBounds();
+			//ground->UpdateBounds();
 			this->Ground->SetMaterial(0, this->MainGroundMaterial);
 			this->Ground->ClearCollisionConvexMeshes();
 			this->Ground->AddCollisionConvexMesh(vertex);
-			this->Ground->UpdatePhysicsVolume(true);
+			//this->AddInstanceComponent(ground);
+			//ground->UpdatePhysicsVolume(true);
+
+			/*this->Ground->UpdateBounds();
+			this->Ground->SetMaterial(0, this->MainGroundMaterial);
+			this->Ground->ClearCollisionConvexMeshes();
+			this->Ground->AddCollisionConvexMesh(vertex);
+			this->Ground->UpdatePhysicsVolume(true);*/
 			
 			UE_LOG(LogTemp, Log, TEXT("FINISEHD MESH"))
 		});
